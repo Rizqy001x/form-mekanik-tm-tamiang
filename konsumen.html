@@ -149,6 +149,7 @@
     let activeEventSource = null;
     let currentPlat = "";
     const consumerDecisions = {};
+    window.lastReceivedData = null;
 
     const itemsMaster = [
       { id: 1, name: "Lampu", icon: "fa-lightbulb" },
@@ -182,6 +183,7 @@
         const res = JSON.parse(e.data);
         if (res && res.data) {
           playTingSound();
+          window.lastReceivedData = res.data;
           if (res.data.decisions) {
             Object.assign(consumerDecisions, res.data.decisions);
           }
@@ -270,6 +272,7 @@
 
     function sendDecision(itemId, decision) {
       if (!currentPlat) return;
+      
       consumerDecisions[itemId] = decision;
       playTingSound();
 
@@ -279,7 +282,9 @@
         body: JSON.stringify(decision)
       });
 
-      connectRealtime();
+      if (window.lastReceivedData) {
+        updateUI(window.lastReceivedData);
+      }
     }
 
     function playTingSound() {
