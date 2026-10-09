@@ -260,21 +260,28 @@
 
       activeEventSource.addEventListener('put', function(e) {
         const res = JSON.parse(e.data);
-        if (res && res.data) {
-          if (typeof res.data === 'object') {
+        if (res && res.data !== undefined) {
+          // Kasus 1: res.data berbentuk objek (banyak item sekaligus)
+          if (typeof res.data === 'object' && res.data !== null) {
             Object.keys(res.data).forEach(itemId => {
-              const dec = res.data[itemId];
-              if (consumerDecisions[itemId] !== dec) {
-                consumerDecisions[itemId] = dec;
-                triggerMechanicAlert(itemId, dec);
+              const rawDec = String(res.data[itemId]).trim().toUpperCase();
+              if (rawDec === 'SETUJU' || rawDec === 'ABAIKAN') {
+                if (consumerDecisions[itemId] !== rawDec) {
+                  consumerDecisions[itemId] = rawDec;
+                  triggerMechanicAlert(itemId, rawDec);
+                }
               }
             });
-          } else if (typeof res.data === 'string' && res.path) {
-            const itemId = res.path.replace('/', '');
-            const dec = res.data;
-            if (itemId && consumerDecisions[itemId] !== dec) {
-              consumerDecisions[itemId] = dec;
-              triggerMechanicAlert(itemId, dec);
+          } 
+          // Kasus 2: res.data berbentuk string tunggal dari path per-item (misal: res.path="/5")
+          else if (typeof res.data === 'string' && res.path) {
+            const itemId = res.path.replace('/', '').trim();
+            const rawDec = String(res.data).trim().toUpperCase();
+            if (itemId && (rawDec === 'SETUJU' || rawDec === 'ABAIKAN')) {
+              if (consumerDecisions[itemId] !== rawDec) {
+                consumerDecisions[itemId] = rawDec;
+                triggerMechanicAlert(itemId, rawDec);
+              }
             }
           }
           renderForm();
@@ -295,14 +302,16 @@
       const title = document.getElementById('modalTitle');
       const msg = document.getElementById('modalMessage');
 
-      if (decision === 'SETUJU') {
+      const decNormalized = String(decision).trim().toUpperCase();
+
+      if (decNormalized === 'SETUJU') {
         iconBg.className = "w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-4xl shadow-inner";
         icon.className = "fa-solid fa-circle-check";
         badge.className = "bg-emerald-600 text-white text-[10px] font-black uppercase px-3 py-1 rounded-full tracking-wider";
         badge.innerText = "PERSETUJUAN KONSUMEN";
         title.innerText = "Perbaikan Disetujui!";
         msg.innerHTML = `Konsumen <strong class="text-emerald-700 font-bold uppercase">MENSETUJUI</strong> perbaikan/pergantian pada item: <br><span class="text-base font-black text-gray-900">${itemId}. ${itemName}</span>`;
-      } else if (decision === 'ABAIKAN') {
+      } else {
         iconBg.className = "w-20 h-20 bg-gray-100 text-gray-600 rounded-full flex items-center justify-center mx-auto text-4xl shadow-inner";
         icon.className = "fa-solid fa-circle-xmark";
         badge.className = "bg-gray-700 text-white text-[10px] font-black uppercase px-3 py-1 rounded-full tracking-wider";
