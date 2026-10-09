@@ -86,8 +86,8 @@
       </h2>
       <div class="grid grid-cols-2 gap-2">
         <div>
-          <label class="block text-[11px] font-bold text-gray-700 mb-1">No. Plat Motor</label>
-          <input type="text" id="noPlat" placeholder="Contoh: DA1234ABC" onkeyup="startListeningConsumen()" onchange="startListeningConsumen()" class="w-full bg-slate-50 border border-gray-300 rounded-xl px-3 py-2 text-xs font-bold uppercase focus:outline-none focus:border-hondaRed">
+          <label class="block text-[11px] font-bold text-gray-700 mb-1">No. Plat / 5 Digit No. Rangka</label>
+          <input type="text" id="noPlat" placeholder="Ex: KH1234XX / 56789" onkeyup="startListeningConsumen()" onchange="startListeningConsumen()" class="w-full bg-slate-50 border border-gray-300 rounded-xl px-3 py-2 text-xs font-bold uppercase focus:outline-none focus:border-hondaRed">
         </div>
         <div>
           <label class="block text-[11px] font-bold text-gray-700 mb-1">Nama Konsumen</label>
@@ -177,11 +177,19 @@
     const inspectionData = {};
     const consumerDecisions = {};
     let activeEventSource = null;
-    let currentListeningPlat = "";
+    let currentListeningKey = "";
 
     items.forEach(item => {
       inspectionData[item.id] = { status: 'BAIK', note: '' };
     });
+
+    function getTodayPrefix() {
+      const d = new Date();
+      const yr = d.getFullYear();
+      const mo = String(d.getMonth() + 1).padStart(2, '0');
+      const da = String(d.getDate()).padStart(2, '0');
+      return `${yr}${mo}${da}`;
+    }
 
     function renderForm() {
       const container = document.getElementById('itemsContainer');
@@ -249,19 +257,21 @@
     }
 
     function startListeningConsumen() {
-      const plat = document.getElementById('noPlat').value.trim().toUpperCase().replace(/\s+/g, '');
-      if (!plat || plat === currentListeningPlat) return;
+      const rawInput = document.getElementById('noPlat').value.trim().toUpperCase().replace(/\s+/g, '');
+      if (!rawInput) return;
 
-      currentListeningPlat = plat;
+      const dailyKey = `${getTodayPrefix()}_${rawInput}`;
+      if (dailyKey === currentListeningKey) return;
+
+      currentListeningKey = dailyKey;
       if (activeEventSource) activeEventSource.close();
 
-      const url = `${FIREBASE_BASE_URL}${plat}/decisions.json`;
+      const url = `${FIREBASE_BASE_URL}${dailyKey}/decisions.json`;
       activeEventSource = new EventSource(url);
 
       activeEventSource.addEventListener('put', function(e) {
         const res = JSON.parse(e.data);
         if (res && res.data !== undefined) {
-          // Kasus 1: res.data berbentuk objek (banyak item sekaligus)
           if (typeof res.data === 'object' && res.data !== null) {
             Object.keys(res.data).forEach(itemId => {
               const rawDec = String(res.data[itemId]).trim().toUpperCase();
@@ -272,9 +282,7 @@
                 }
               }
             });
-          } 
-          // Kasus 2: res.data berbentuk string tunggal dari path per-item (misal: res.path="/5")
-          else if (typeof res.data === 'string' && res.path) {
+          } else if (typeof res.data === 'string' && res.path) {
             const itemId = res.path.replace('/', '').trim();
             const rawDec = String(res.data).trim().toUpperCase();
             if (itemId && (rawDec === 'SETUJU' || rawDec === 'ABAIKAN')) {
@@ -333,9 +341,9 @@
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
         osc.type = 'triangle';
-        osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
-        osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.15); // E5
-        osc.frequency.setValueAtTime(783.99, audioCtx.currentTime + 0.3); // G5
+        osc.frequency.setValueAtTime(523.25, audioCtx.currentTime);
+        osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.15);
+        osc.frequency.setValueAtTime(783.99, audioCtx.currentTime + 0.3);
         gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.8);
         osc.connect(gain);
@@ -348,23 +356,26 @@
     }
 
     function kirimKeFirebase() {
-      const plat = document.getElementById('noPlat').value.trim().toUpperCase().replace(/\s+/g, '');
+      const rawInput = document.getElementById('noPlat').value.trim().toUpperCase().replace(/\s+/g, '');
       const nama = document.getElementById('namaKonsumen').value.trim();
       const tipe = document.getElementById('tipeMotor').value;
       const km = document.getElementById('kmMotor').value;
       const catatan = document.getElementById('catatanMekanik').value.trim();
 
-      if (!plat) {
-        Swal.fire("Nomor Plat Kosong", "Harap isi Nomor Plat Motor terlebih dahulu!", "warning");
+      if (!rawInput) {
+        Swal.fire("Identitas Motor Kosong", "Harap masukkan No. Plat atau 5 Digit No. Rangka!", "warning");
         return;
       }
 
+      const dailyKey = `${getTodayPrefix()}_${rawInput}`;
+
       const payload = {
-        platNo: document.getElementById('noPlat').value.toUpperCase(),
+        platNo: rawInput,
         namaKonsumen: nama || "Konsumen",
         tipeMotor: tipe,
         kmMotor: km || "0",
         catatanMekanik: catatan,
+        serviceDate: getTodayPrefix(),
         lastUpdate: new Date().toLocaleTimeString('id-ID'),
         items: inspectionData
       };
@@ -373,7 +384,7 @@
       btn.disabled = true;
       btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i> Mengirim Data...`;
 
-      fetch(`${FIREBASE_BASE_URL}${plat}.json`, {
+      fetch(`${FIREBASE_BASE_URL}${dailyKey}.json`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
