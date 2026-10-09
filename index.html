@@ -15,7 +15,6 @@
             hondaRed: '#cc0000',
             hondaDarkRed: '#990000',
             hondaBlack: '#111111',
-            hondaGray: '#222222',
             statusBaik: '#16a34a',
             statusService: '#ca8a04',
             statusGanti: '#dc2626'
@@ -29,9 +28,37 @@
     .status-btn-active-baik { background-color: #16a34a !important; color: white !important; border-color: #15803d !important; }
     .status-btn-active-service { background-color: #ca8a04 !important; color: white !important; border-color: #a16207 !important; }
     .status-btn-active-ganti { background-color: #dc2626 !important; color: white !important; border-color: #b91c1c !important; }
+    
+    @keyframes pulse-fast {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+    .animate-pulse-fast { animation: pulse-fast 0.8s infinite ease-in-out; }
   </style>
 </head>
 <body class="min-h-screen pb-20">
+
+  <!-- FULLSCREEN HIGH-PRIORITY ALERT MODAL FOR MECHANIC -->
+  <div id="fullScreenAlertModal" class="fixed inset-0 z-[100] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-6 text-center shadow-2xl border-4 border-hondaRed space-y-4 animate-pulse-fast">
+      <div id="modalIconBg" class="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-4xl shadow-inner">
+        <i id="modalIcon" class="fa-solid fa-bell-concierge"></i>
+      </div>
+      <div>
+        <span id="modalBadge" class="bg-emerald-600 text-white text-[10px] font-black uppercase px-3 py-1 rounded-full tracking-wider">
+          PERSETUJUAN KONSUMEN
+        </span>
+        <h2 id="modalTitle" class="text-xl font-black text-gray-900 mt-2">Persetujuan Masuk!</h2>
+        <p id="modalMessage" class="text-xs text-gray-600 mt-1">
+          Konsumen MENSETUJUI perbaikan pada item: <strong>Oli Mesin</strong>.
+        </p>
+      </div>
+      <button onclick="closeAlertModal()" class="w-full bg-hondaRed hover:bg-hondaDarkRed text-white font-extrabold py-3.5 px-4 rounded-xl shadow-lg text-sm flex items-center justify-center space-x-2">
+        <i class="fa-solid fa-check-circle"></i>
+        <span>Tutup & Cek Daftar Item</span>
+      </button>
+    </div>
+  </div>
 
   <header class="bg-hondaBlack text-white sticky top-0 z-50 border-b-4 border-hondaRed shadow-md">
     <div class="max-w-md mx-auto px-4 py-3 flex items-center justify-between">
@@ -44,8 +71,8 @@
           <p class="text-xs text-gray-400">Form Lapor Hasil Cek Mekanik</p>
         </div>
       </div>
-      <span class="text-[10px] bg-red-950 text-red-300 font-bold px-2.5 py-1 rounded-full border border-red-800">
-        <i class="fa-solid fa-signal text-emerald-400 mr-1"></i>Firebase Live
+      <span class="text-[10px] bg-red-950 text-red-300 font-bold px-2.5 py-1 rounded-full border border-red-800 flex items-center">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping mr-1.5"></span>Live Sync
       </span>
     </div>
   </header>
@@ -60,7 +87,7 @@
       <div class="grid grid-cols-2 gap-2">
         <div>
           <label class="block text-[11px] font-bold text-gray-700 mb-1">No. Plat Motor</label>
-          <input type="text" id="noPlat" placeholder="Contoh: DA 1234 ABC" class="w-full bg-slate-50 border border-gray-300 rounded-xl px-3 py-2 text-xs font-bold uppercase focus:outline-none focus:border-hondaRed">
+          <input type="text" id="noPlat" placeholder="Contoh: DA1234ABC" onchange="startListeningConsumen()" class="w-full bg-slate-50 border border-gray-300 rounded-xl px-3 py-2 text-xs font-bold uppercase focus:outline-none focus:border-hondaRed">
         </div>
         <div>
           <label class="block text-[11px] font-bold text-gray-700 mb-1">Nama Konsumen</label>
@@ -137,6 +164,9 @@
     ];
 
     const inspectionData = {};
+    const consumerDecisions = {};
+    let activeEventSource = null;
+
     items.forEach(item => {
       inspectionData[item.id] = { status: 'BAIK', note: '' };
     });
@@ -147,8 +177,19 @@
 
       items.forEach(item => {
         const curData = inspectionData[item.id];
+        const decision = consumerDecisions[item.id];
+
         const card = document.createElement('div');
-        card.className = "bg-white rounded-2xl p-3.5 shadow-sm border border-gray-200 space-y-2.5";
+        card.id = `itemCard_${item.id}`;
+        card.className = "bg-white rounded-2xl p-3.5 shadow-sm border border-gray-200 space-y-2.5 transition";
+        
+        let decisionBadge = '';
+        if (decision === 'SETUJU') {
+          decisionBadge = `<span class="bg-emerald-100 text-emerald-800 border border-emerald-300 text-[10px] font-black px-2 py-0.5 rounded-full flex items-center"><i class="fa-solid fa-circle-check mr-1 text-emerald-600"></i> DISETOJOUI KONSUMEN</span>`;
+        } else if (decision === 'ABAIKAN') {
+          decisionBadge = `<span class="bg-gray-200 text-gray-700 border border-gray-300 text-[10px] font-black px-2 py-0.5 rounded-full flex items-center"><i class="fa-solid fa-circle-xmark mr-1 text-gray-500"></i> DIABAIKAN KONSUMEN</span>`;
+        }
+
         card.innerHTML = `
           <div class="flex items-center justify-between">
             <div class="flex items-center space-x-2">
@@ -163,7 +204,10 @@
               <button type="button" onclick="setStatus(${item.id}, 'GANTI')" class="px-2.5 py-1 text-[10px] font-extrabold rounded-lg border border-gray-200 bg-gray-100 text-gray-600 ${curData.status === 'GANTI' ? 'status-btn-active-ganti' : ''}">GANTI</button>
             </div>
           </div>
-          <input type="text" placeholder="Catatan kondisi item ini..." value="${curData.note}" onchange="setNote(${item.id}, this.value)" class="w-full bg-slate-50 border border-gray-200 rounded-xl px-2.5 py-1.5 text-xs text-gray-700 focus:outline-none focus:border-hondaRed">
+          <div class="flex items-center justify-between space-x-2">
+            <input type="text" placeholder="Catatan kondisi item ini..." value="${curData.note}" onchange="setNote(${item.id}, this.value)" class="flex-1 bg-slate-50 border border-gray-200 rounded-xl px-2.5 py-1.5 text-xs text-gray-700 focus:outline-none focus:border-hondaRed">
+            ${decisionBadge}
+          </div>
         `;
         container.appendChild(card);
       });
@@ -190,6 +234,86 @@
       document.getElementById('rekapBaik').innerText = b;
       document.getElementById('rekapService').innerText = s;
       document.getElementById('rekapGanti').innerText = g;
+    }
+
+    function startListeningConsumen() {
+      const plat = document.getElementById('noPlat').value.trim().toUpperCase().replace(/\s+/g, '');
+      if (!plat) return;
+
+      if (activeEventSource) activeEventSource.close();
+
+      const url = `${FIREBASE_BASE_URL}${plat}/decisions.json`;
+      activeEventSource = new EventSource(url);
+
+      activeEventSource.addEventListener('put', function(e) {
+        const res = JSON.parse(e.data);
+        if (res && res.data) {
+          Object.keys(res.data).forEach(itemId => {
+            const dec = res.data[itemId];
+            if (consumerDecisions[itemId] !== dec) {
+              consumerDecisions[itemId] = dec;
+              triggerMechanicAlert(itemId, dec);
+            }
+          });
+          renderForm();
+        }
+      });
+    }
+
+    function triggerMechanicAlert(itemId, decision) {
+      const itemObj = items.find(i => i.id == itemId);
+      const itemName = itemObj ? itemObj.name : `Item #${itemId}`;
+
+      playAlertSound();
+
+      const modal = document.getElementById('fullScreenAlertModal');
+      const iconBg = document.getElementById('modalIconBg');
+      const icon = document.getElementById('modalIcon');
+      const badge = document.getElementById('modalBadge');
+      const title = document.getElementById('modalTitle');
+      const msg = document.getElementById('modalMessage');
+
+      if (decision === 'SETUJU') {
+        iconBg.className = "w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-4xl shadow-inner";
+        icon.className = "fa-solid fa-circle-check";
+        badge.className = "bg-emerald-600 text-white text-[10px] font-black uppercase px-3 py-1 rounded-full tracking-wider";
+        badge.innerText = "PERSETUJUAN KONSUMEN";
+        title.innerText = "Perbaikan Disetujui!";
+        msg.innerHTML = `Konsumen <strong class="text-emerald-700 font-bold uppercase">MENSETUJUI</strong> perbaikan/pergantian pada item: <br><span class="text-base font-black text-gray-900">${itemId}. ${itemName}</span>`;
+      } else {
+        iconBg.className = "w-20 h-20 bg-gray-100 text-gray-600 rounded-full flex items-center justify-center mx-auto text-4xl shadow-inner";
+        icon.className = "fa-solid fa-circle-xmark";
+        badge.className = "bg-gray-700 text-white text-[10px] font-black uppercase px-3 py-1 rounded-full tracking-wider";
+        badge.innerText = "DIABAIKAN KONSUMEN";
+        title.innerText = "Persetujuan Ditolak";
+        msg.innerHTML = `Konsumen <strong class="text-gray-700 font-bold uppercase">DIABAIKAN</strong> saran perbaikan pada item: <br><span class="text-base font-black text-gray-900">${itemId}. ${itemName}</span>`;
+      }
+
+      modal.classList.remove('hidden');
+    }
+
+    function closeAlertModal() {
+      document.getElementById('fullScreenAlertModal').classList.add('hidden');
+    }
+
+    function playAlertSound() {
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
+        osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.15); // E5
+        osc.frequency.setValueAtTime(783.99, audioCtx.currentTime + 0.3); // G5
+        gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.8);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.8);
+      } catch (e) {
+        console.log('Audio Error:', e);
+      }
     }
 
     function kirimKeFirebase() {
@@ -219,7 +343,7 @@
       btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i> Mengirim Data...`;
 
       fetch(`${FIREBASE_BASE_URL}${plat}.json`, {
-        method: 'PUT',
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       })
@@ -228,6 +352,7 @@
         btn.disabled = false;
         btn.innerHTML = `<i class="fa-solid fa-paper-plane mr-2"></i> Kirim Hasil Cek ke Konsumen Realtime`;
         Swal.fire("Berhasil Dikirim!", `Laporan motor ${payload.platNo} terkirim ke HP konsumen!`, "success");
+        startListeningConsumen();
       })
       .catch(err => {
         btn.disabled = false;
