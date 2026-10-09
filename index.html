@@ -53,7 +53,7 @@
           Konsumen MENSETUJUI perbaikan pada item: <strong>Oli Mesin</strong>.
         </p>
       </div>
-      <button onclick="closeAlertModal()" class="w-full bg-hondaRed hover:bg-hondaDarkRed text-white font-extrabold py-3.5 px-4 rounded-xl shadow-lg text-sm flex items-center justify-center space-x-2">
+      <button type="button" onclick="closeAlertModal()" class="w-full bg-hondaRed hover:bg-hondaDarkRed text-white font-extrabold py-3.5 px-4 rounded-xl shadow-lg text-sm flex items-center justify-center space-x-2">
         <i class="fa-solid fa-check-circle"></i>
         <span>Tutup & Cek Daftar Item</span>
       </button>
@@ -87,7 +87,7 @@
       <div class="grid grid-cols-2 gap-2">
         <div>
           <label class="block text-[11px] font-bold text-gray-700 mb-1">No. Plat Motor</label>
-          <input type="text" id="noPlat" placeholder="Contoh: DA1234ABC" onchange="startListeningConsumen()" class="w-full bg-slate-50 border border-gray-300 rounded-xl px-3 py-2 text-xs font-bold uppercase focus:outline-none focus:border-hondaRed">
+          <input type="text" id="noPlat" placeholder="Contoh: DA1234ABC" onkeyup="startListeningConsumen()" onchange="startListeningConsumen()" class="w-full bg-slate-50 border border-gray-300 rounded-xl px-3 py-2 text-xs font-bold uppercase focus:outline-none focus:border-hondaRed">
         </div>
         <div>
           <label class="block text-[11px] font-bold text-gray-700 mb-1">Nama Konsumen</label>
@@ -101,19 +101,19 @@
             <option value="ADV 160">ADV 160</option>
             <option value="BeAT">BeAT</option>
             <option value="BeAT Street">BeAT Street</option>
-            <option value="Genio">Genio</option>
-            <option value="Vario">Vario</option>
-            <option value="CRF 150">CRF 150</option>
+            <option value="CB 150 R">CB 150 R</option>
             <option value="CB Verza">CB Verza</option>
-            <option value="Stylo">Stylo</option>
+            <option value="CB150X">CB150X</option>
+            <option value="CBR 150 RR">CBR 150 RR</option>
+            <option value="CRF 150">CRF 150</option>
+            <option value="Genio">Genio</option>
             <option value="PCX">PCX</option>
-            <option value="Scoopy">Scoopy</option>
             <option value="Revo">Revo</option>
+            <option value="Scoopy">Scoopy</option>
+            <option value="Stylo">Stylo</option>
             <option value="Supra">Supra</option>
             <option value="Supra GTR">Supra GTR</option>
-            <option value="CB 150 R">CB 150 R</option>
-            <option value="CBR 150 RR">CBR 150 RR</option>
-            <option value="CB150X">CB150X</option>
+            <option value="Vario">Vario</option>
             <option value="Lainnya">Lainnya</option>
           </select>
         </div>
@@ -146,7 +146,7 @@
     </div>
 
     <!-- TOMBOL SIMPAN -->
-    <button onclick="kirimKeFirebase()" id="btnSubmit" class="w-full bg-hondaRed hover:bg-hondaDarkRed text-white font-extrabold py-3.5 px-4 rounded-xl shadow-lg transition flex items-center justify-center space-x-2 text-sm">
+    <button type="button" onclick="kirimKeFirebase()" id="btnSubmit" class="w-full bg-hondaRed hover:bg-hondaDarkRed text-white font-extrabold py-3.5 px-4 rounded-xl shadow-lg transition flex items-center justify-center space-x-2 text-sm">
       <i class="fa-solid fa-paper-plane"></i>
       <span>Kirim Hasil Cek ke Konsumen Realtime</span>
     </button>
@@ -177,6 +177,7 @@
     const inspectionData = {};
     const consumerDecisions = {};
     let activeEventSource = null;
+    let currentListeningPlat = "";
 
     items.forEach(item => {
       inspectionData[item.id] = { status: 'BAIK', note: '' };
@@ -249,8 +250,9 @@
 
     function startListeningConsumen() {
       const plat = document.getElementById('noPlat').value.trim().toUpperCase().replace(/\s+/g, '');
-      if (!plat) return;
+      if (!plat || plat === currentListeningPlat) return;
 
+      currentListeningPlat = plat;
       if (activeEventSource) activeEventSource.close();
 
       const url = `${FIREBASE_BASE_URL}${plat}/decisions.json`;
@@ -259,13 +261,22 @@
       activeEventSource.addEventListener('put', function(e) {
         const res = JSON.parse(e.data);
         if (res && res.data) {
-          Object.keys(res.data).forEach(itemId => {
-            const dec = res.data[itemId];
-            if (consumerDecisions[itemId] !== dec) {
+          if (typeof res.data === 'object') {
+            Object.keys(res.data).forEach(itemId => {
+              const dec = res.data[itemId];
+              if (consumerDecisions[itemId] !== dec) {
+                consumerDecisions[itemId] = dec;
+                triggerMechanicAlert(itemId, dec);
+              }
+            });
+          } else if (typeof res.data === 'string' && res.path) {
+            const itemId = res.path.replace('/', '');
+            const dec = res.data;
+            if (itemId && consumerDecisions[itemId] !== dec) {
               consumerDecisions[itemId] = dec;
               triggerMechanicAlert(itemId, dec);
             }
-          });
+          }
           renderForm();
         }
       });
@@ -291,7 +302,7 @@
         badge.innerText = "PERSETUJUAN KONSUMEN";
         title.innerText = "Perbaikan Disetujui!";
         msg.innerHTML = `Konsumen <strong class="text-emerald-700 font-bold uppercase">MENSETUJUI</strong> perbaikan/pergantian pada item: <br><span class="text-base font-black text-gray-900">${itemId}. ${itemName}</span>`;
-      } else {
+      } else if (decision === 'ABAIKAN') {
         iconBg.className = "w-20 h-20 bg-gray-100 text-gray-600 rounded-full flex items-center justify-center mx-auto text-4xl shadow-inner";
         icon.className = "fa-solid fa-circle-xmark";
         badge.className = "bg-gray-700 text-white text-[10px] font-black uppercase px-3 py-1 rounded-full tracking-wider";
