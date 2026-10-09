@@ -148,7 +148,7 @@
     let soundEnabled = true;
     let activeEventSource = null;
     let currentPlat = "";
-    const consumerDecisions = {};
+    let consumerDecisions = {};
     let isDataLoaded = false;
 
     const itemsMaster = [
@@ -175,6 +175,7 @@
 
       currentPlat = input;
       isDataLoaded = false;
+      consumerDecisions = {}; // Reset keputusan saat memuat plat baru
       if (activeEventSource) activeEventSource.close();
 
       const url = `https://supernova-6d8ed-default-rtdb.firebaseio.com/active_services/${currentPlat}.json`;
@@ -187,7 +188,6 @@
           if (res.data.decisions) {
             Object.assign(consumerDecisions, res.data.decisions);
           }
-          // Render pertama kali saat plat dicari
           if (!isDataLoaded) {
             renderFullUI(res.data);
             isDataLoaded = true;
@@ -226,6 +226,16 @@
         if (st === 'SERVICE') { badgeClass = 'status-badge-service'; badgeLabel = 'PERLU SERVICE'; }
         if (st === 'GANTI') { badgeClass = 'status-badge-ganti'; badgeLabel = 'HARUS GANTI'; }
 
+        // Kelas tombol default netral (belum terpilih)
+        let btnSetujuClass = "bg-emerald-100 text-emerald-800 hover:bg-emerald-200";
+        let btnAbaikanClass = "bg-gray-200 text-gray-700 hover:bg-gray-300";
+
+        if (userChoice === 'SETUJU') {
+          btnSetujuClass = "bg-emerald-600 text-white shadow-sm";
+        } else if (userChoice === 'ABAIKAN') {
+          btnAbaikanClass = "bg-gray-700 text-white shadow-sm";
+        }
+
         const card = document.createElement('div');
         card.id = `item-card-${item.id}`;
         card.className = `p-3 rounded-xl border transition ${isProblem ? 'bg-amber-50/40 border-amber-200' : 'bg-slate-50/70 border-gray-200'}`;
@@ -250,10 +260,10 @@
             <div class="mt-2.5 pt-2 border-t border-amber-200/60 flex items-center justify-between" id="action-area-${item.id}">
               <span class="text-[11px] font-bold text-gray-600">Tindakan Anda:</span>
               <div class="flex space-x-1.5">
-                <button type="button" onclick="sendDecision(event, ${item.id}, 'SETUJU')" id="btn-setuju-${item.id}" class="px-2.5 py-1 text-[11px] font-bold rounded-lg transition ${userChoice === 'SETUJU' ? 'bg-emerald-600 text-white shadow-sm' : 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'}">
+                <button type="button" onclick="sendDecision(event, ${item.id}, 'SETUJU')" id="btn-setuju-${item.id}" class="px-2.5 py-1 text-[11px] font-bold rounded-lg transition ${btnSetujuClass}">
                   <i class="fa-solid fa-check mr-1"></i>Ganti / Perbaiki
                 </button>
-                <button type="button" onclick="sendDecision(event, ${item.id}, 'ABAIKAN')" id="btn-abaikan-${item.id}" class="px-2.5 py-1 text-[11px] font-bold rounded-lg transition ${userChoice === 'ABAIKAN' ? 'bg-gray-700 text-white shadow-sm' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}">
+                <button type="button" onclick="sendDecision(event, ${item.id}, 'ABAIKAN')" id="btn-abaikan-${item.id}" class="px-2.5 py-1 text-[11px] font-bold rounded-lg transition ${btnAbaikanClass}">
                   Abaikan
                 </button>
               </div>
@@ -285,7 +295,6 @@
       consumerDecisions[itemId] = decision;
       playTingSound();
 
-      // Perbarui tampilan visual tombol secara langsung tanpa mengguncang layout
       const btnSetuju = document.getElementById(`btn-setuju-${itemId}`);
       const btnAbaikan = document.getElementById(`btn-abaikan-${itemId}`);
 
@@ -299,7 +308,6 @@
         }
       }
 
-      // Kirim pilihan ke Firebase
       fetch(`https://supernova-6d8ed-default-rtdb.firebaseio.com/active_services/${currentPlat}/decisions/${itemId}.json`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
