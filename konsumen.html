@@ -50,7 +50,7 @@
           <p class="text-xs text-gray-400">Tamiang Layang • Real-time Service Monitor</p>
         </div>
       </div>
-      <button onclick="toggleSound()" id="soundToggleBtn" class="text-xs bg-gray-800 text-amber-400 px-3 py-1.5 rounded-full border border-gray-700 flex items-center space-x-1">
+      <button type="button" onclick="toggleSound()" id="soundToggleBtn" class="text-xs bg-gray-800 text-amber-400 px-3 py-1.5 rounded-full border border-gray-700 flex items-center space-x-1">
         <i class="fa-solid fa-volume-high"></i>
         <span>Suara On</span>
       </button>
@@ -66,7 +66,7 @@
       </label>
       <div class="flex space-x-2">
         <input type="text" id="inputPlatKonsumen" placeholder="Contoh: DA1234ABC" class="flex-1 bg-slate-50 border-2 border-gray-300 rounded-xl px-3 py-2 font-bold uppercase text-gray-800 focus:outline-none focus:border-hondaRed text-sm">
-        <button onclick="connectRealtime()" class="bg-hondaRed text-white font-bold px-4 py-2 rounded-xl text-xs hover:bg-hondaDarkRed transition">
+        <button type="button" onclick="connectRealtime()" class="bg-hondaRed text-white font-bold px-4 py-2 rounded-xl text-xs hover:bg-hondaDarkRed transition">
           Pantau
         </button>
       </div>
@@ -136,7 +136,7 @@
     </div>
 
     <div class="space-y-2 pt-1">
-      <button onclick="downloadAsImage()" class="w-full bg-gray-800 hover:bg-gray-900 text-white font-bold py-3 px-4 rounded-xl shadow-md transition flex items-center justify-center space-x-2 text-sm">
+      <button type="button" onclick="downloadAsImage()" class="w-full bg-gray-800 hover:bg-gray-900 text-white font-bold py-3 px-4 rounded-xl shadow-md transition flex items-center justify-center space-x-2 text-sm">
         <i class="fa-solid fa-download text-amber-400"></i>
         <span>Unduh Hasil Cek Mekanik (PNG)</span>
       </button>
@@ -149,7 +149,7 @@
     let activeEventSource = null;
     let currentPlat = "";
     const consumerDecisions = {};
-    let isUserInteracting = false;
+    let isDataLoaded = false;
 
     const itemsMaster = [
       { id: 1, name: "Lampu", icon: "fa-lightbulb" },
@@ -174,22 +174,24 @@
       if (!input) return;
 
       currentPlat = input;
+      isDataLoaded = false;
       if (activeEventSource) activeEventSource.close();
 
       const url = `https://supernova-6d8ed-default-rtdb.firebaseio.com/active_services/${currentPlat}.json`;
       activeEventSource = new EventSource(url);
 
       activeEventSource.addEventListener('put', function(e) {
-        // Jika konsumen baru saja klik tombol, abaikan redraw otomatis agar posisi layar tidak loncat
-        if (isUserInteracting) return;
-
         const res = JSON.parse(e.data);
         if (res && res.data) {
           playTingSound();
           if (res.data.decisions) {
             Object.assign(consumerDecisions, res.data.decisions);
           }
-          renderFullUI(res.data);
+          // Render pertama kali saat plat dicari
+          if (!isDataLoaded) {
+            renderFullUI(res.data);
+            isDataLoaded = true;
+          }
         }
       });
     }
@@ -248,10 +250,10 @@
             <div class="mt-2.5 pt-2 border-t border-amber-200/60 flex items-center justify-between" id="action-area-${item.id}">
               <span class="text-[11px] font-bold text-gray-600">Tindakan Anda:</span>
               <div class="flex space-x-1.5">
-                <button onclick="sendDecision(${item.id}, 'SETUJU')" id="btn-setuju-${item.id}" class="px-2.5 py-1 text-[11px] font-bold rounded-lg transition ${userChoice === 'SETUJU' ? 'bg-emerald-600 text-white shadow-sm' : 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'}">
+                <button type="button" onclick="sendDecision(event, ${item.id}, 'SETUJU')" id="btn-setuju-${item.id}" class="px-2.5 py-1 text-[11px] font-bold rounded-lg transition ${userChoice === 'SETUJU' ? 'bg-emerald-600 text-white shadow-sm' : 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'}">
                   <i class="fa-solid fa-check mr-1"></i>Ganti / Perbaiki
                 </button>
-                <button onclick="sendDecision(${item.id}, 'ABAIKAN')" id="btn-abaikan-${item.id}" class="px-2.5 py-1 text-[11px] font-bold rounded-lg transition ${userChoice === 'ABAIKAN' ? 'bg-gray-700 text-white shadow-sm' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}">
+                <button type="button" onclick="sendDecision(event, ${item.id}, 'ABAIKAN')" id="btn-abaikan-${item.id}" class="px-2.5 py-1 text-[11px] font-bold rounded-lg transition ${userChoice === 'ABAIKAN' ? 'bg-gray-700 text-white shadow-sm' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}">
                   Abaikan
                 </button>
               </div>
@@ -273,15 +275,17 @@
       }
     }
 
-    function sendDecision(itemId, decision) {
+    function sendDecision(evt, itemId, decision) {
+      if (evt) {
+        evt.preventDefault();
+        evt.stopPropagation();
+      }
       if (!currentPlat) return;
       
-      // Kunci perbaikan: Tandai bahwa konsumen sedang berinteraksi agar tidak terjadi auto-reload dari SSE
-      isUserInteracting = true;
       consumerDecisions[itemId] = decision;
       playTingSound();
 
-      // Perbarui tampilan tombol lokal secara presisi tanpa mengguncang layout HTML
+      // Perbarui tampilan visual tombol secara langsung tanpa mengguncang layout
       const btnSetuju = document.getElementById(`btn-setuju-${itemId}`);
       const btnAbaikan = document.getElementById(`btn-abaikan-${itemId}`);
 
@@ -300,11 +304,6 @@
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(decision)
-      }).finally(() => {
-        // Lepas kunci interaksi setelah pengiriman selesai
-        setTimeout(() => {
-          isUserInteracting = false;
-        }, 1500);
       });
     }
 
