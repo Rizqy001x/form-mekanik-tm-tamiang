@@ -59,13 +59,13 @@
 
   <main class="max-w-md mx-auto px-4 pt-4 space-y-4">
 
-    <!-- INPUT CARI NOMOR PLAT -->
+    <!-- INPUT CARI NOMOR PLAT ATAL NO RANGKA -->
     <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-200 space-y-2">
       <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider">
-        <i class="fa-solid fa-magnifying-glass text-hondaRed mr-1"></i> Masukkan Plat Nomor Anda:
+        <i class="fa-solid fa-magnifying-glass text-hondaRed mr-1"></i> Masukkan No. Plat / 5 Digit No. Rangka:
       </label>
       <div class="flex space-x-2">
-        <input type="text" id="inputPlatKonsumen" placeholder="Contoh: DA1234ABC" class="flex-1 bg-slate-50 border-2 border-gray-300 rounded-xl px-3 py-2 font-bold uppercase text-gray-800 focus:outline-none focus:border-hondaRed text-sm">
+        <input type="text" id="inputPlatKonsumen" placeholder="Ex: KH1234XX / 56789" class="flex-1 bg-slate-50 border-2 border-gray-300 rounded-xl px-3 py-2 font-bold uppercase text-gray-800 focus:outline-none focus:border-hondaRed text-sm">
         <button type="button" onclick="connectRealtime()" class="bg-hondaRed text-white font-bold px-4 py-2 rounded-xl text-xs hover:bg-hondaDarkRed transition">
           Pantau
         </button>
@@ -81,7 +81,7 @@
             <span class="inline-block bg-hondaRed text-white text-[10px] font-black uppercase px-2 py-0.5 rounded tracking-wider mb-1">
               Lembar Cek Digital
             </span>
-            <h2 id="dispPlat" class="text-xl font-black tracking-tight text-yellow-400">DA ---- XXX</h2>
+            <h2 id="dispPlat" class="text-xl font-black tracking-tight text-yellow-400">---- XXX</h2>
             <p id="dispModel" class="text-xs text-gray-300 font-medium">Honda Motor</p>
           </div>
           <div class="text-right">
@@ -118,7 +118,7 @@
       </div>
 
       <div class="p-3 space-y-2.5" id="inspectionList">
-        <p class="text-center text-xs text-gray-400 py-6">Masukkan plat nomor di atas untuk memantau pengerjaan motor Anda.</p>
+        <p class="text-center text-xs text-gray-400 py-6">Masukkan No. Plat atau 5 Digit No. Rangka di atas untuk memantau pengerjaan motor Anda.</p>
       </div>
 
       <div class="p-3 bg-slate-50 border-t border-gray-200">
@@ -147,7 +147,7 @@
   <script>
     let soundEnabled = true;
     let activeEventSource = null;
-    let currentPlat = "";
+    let currentDailyKey = "";
     let consumerDecisions = {};
     let isDataLoaded = false;
 
@@ -169,16 +169,24 @@
       { id: 15, name: "Busi", icon: "fa-bolt" }
     ];
 
-    function connectRealtime() {
-      const input = document.getElementById('inputPlatKonsumen').value.trim().toUpperCase().replace(/\s+/g, '');
-      if (!input) return;
+    function getTodayPrefix() {
+      const d = new Date();
+      const yr = d.getFullYear();
+      const mo = String(d.getMonth() + 1).padStart(2, '0');
+      const da = String(d.getDate()).padStart(2, '0');
+      return `${yr}${mo}${da}`;
+    }
 
-      currentPlat = input;
+    function connectRealtime() {
+      const rawInput = document.getElementById('inputPlatKonsumen').value.trim().toUpperCase().replace(/\s+/g, '');
+      if (!rawInput) return;
+
+      currentDailyKey = `${getTodayPrefix()}_${rawInput}`;
       isDataLoaded = false;
-      consumerDecisions = {}; // Reset keputusan saat memuat plat baru
+      consumerDecisions = {};
       if (activeEventSource) activeEventSource.close();
 
-      const url = `https://supernova-6d8ed-default-rtdb.firebaseio.com/active_services/${currentPlat}.json`;
+      const url = `https://supernova-6d8ed-default-rtdb.firebaseio.com/active_services/${currentDailyKey}.json`;
       activeEventSource = new EventSource(url);
 
       activeEventSource.addEventListener('put', function(e) {
@@ -226,7 +234,6 @@
         if (st === 'SERVICE') { badgeClass = 'status-badge-service'; badgeLabel = 'PERLU SERVICE'; }
         if (st === 'GANTI') { badgeClass = 'status-badge-ganti'; badgeLabel = 'HARUS GANTI'; }
 
-        // Kelas tombol default netral (belum terpilih)
         let btnSetujuClass = "bg-emerald-100 text-emerald-800 hover:bg-emerald-200";
         let btnAbaikanClass = "bg-gray-200 text-gray-700 hover:bg-gray-300";
 
@@ -290,7 +297,7 @@
         evt.preventDefault();
         evt.stopPropagation();
       }
-      if (!currentPlat) return;
+      if (!currentDailyKey) return;
       
       consumerDecisions[itemId] = decision;
       playTingSound();
@@ -308,7 +315,7 @@
         }
       }
 
-      fetch(`https://supernova-6d8ed-default-rtdb.firebaseio.com/active_services/${currentPlat}/decisions/${itemId}.json`, {
+      fetch(`https://supernova-6d8ed-default-rtdb.firebaseio.com/active_services/${currentDailyKey}/decisions/${itemId}.json`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(decision)
