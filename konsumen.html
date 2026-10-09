@@ -4,11 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Portal Konsumen - Hasil Pemeriksaan Motor | Honda Trio Motor</title>
-  <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- FontAwesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <!-- html2canvas for Download Image Feature -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
   <script>
@@ -19,8 +16,6 @@
             hondaRed: '#cc0000',
             hondaDarkRed: '#990000',
             hondaBlack: '#111111',
-            hondaGray: '#222222',
-            hondaLightBg: '#f8fafc',
             statusBaik: '#16a34a',
             statusService: '#ca8a04',
             statusGanti: '#dc2626'
@@ -30,10 +25,7 @@
     }
   </script>
   <style>
-    body {
-      background-color: #f1f5f9;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-    }
+    body { background-color: #f1f5f9; font-family: system-ui, -apple-system, sans-serif; }
     .status-badge-baik { background-color: #dcfce7; color: #15803d; border: 1px solid #86efac; }
     .status-badge-service { background-color: #fef9c3; color: #a16207; border: 1px solid #fde047; }
     .status-badge-ganti { background-color: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; }
@@ -42,18 +34,15 @@
       0%, 100% { transform: scale(1); }
       50% { transform: scale(1.02); }
     }
-    .alert-ring {
-      animation: pulse-gentle 2s infinite ease-in-out;
-    }
+    .alert-ring { animation: pulse-gentle 2s infinite ease-in-out; }
   </style>
 </head>
 <body class="min-h-screen pb-12">
 
-  <!-- HEADER BRANDING -->
   <header class="bg-hondaBlack text-white sticky top-0 z-50 border-b-4 border-hondaRed shadow-lg">
     <div class="max-w-md mx-auto px-4 py-3 flex items-center justify-between">
       <div class="flex items-center space-x-3">
-        <div class="bg-hondaRed p-2 rounded-lg flex items-center justify-center font-bold text-lg tracking-wider text-white">
+        <div class="bg-hondaRed p-2 rounded-lg flex items-center justify-center font-bold text-lg text-white">
           <i class="fa-solid fa-motorcycle text-xl"></i>
         </div>
         <div>
@@ -61,7 +50,7 @@
           <p class="text-xs text-gray-400">Tamiang Layang • Real-time Service Monitor</p>
         </div>
       </div>
-      <button onclick="toggleSound()" id="soundToggleBtn" class="text-xs bg-gray-800 hover:bg-gray-700 text-amber-400 px-3 py-1.5 rounded-full border border-gray-700 flex items-center space-x-1 transition">
+      <button onclick="toggleSound()" id="soundToggleBtn" class="text-xs bg-gray-800 text-amber-400 px-3 py-1.5 rounded-full border border-gray-700 flex items-center space-x-1">
         <i class="fa-solid fa-volume-high"></i>
         <span>Suara On</span>
       </button>
@@ -70,58 +59,55 @@
 
   <main class="max-w-md mx-auto px-4 pt-4 space-y-4">
 
-    <!-- SELECTOR MOTOR (DAFTAR ANTREAN DI RUANG TUNGGU) -->
-    <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-200">
-      <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
-        <i class="fa-solid fa-magnifying-glass text-hondaRed mr-1"></i> Pilih Motor Anda dari Antrean:
+    <!-- INPUT CARI NOMOR PLAT -->
+    <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-200 space-y-2">
+      <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider">
+        <i class="fa-solid fa-magnifying-glass text-hondaRed mr-1"></i> Masukkan Plat Nomor Anda:
       </label>
-      <select id="vehicleSelector" onchange="loadVehicleData(this.value)" class="w-full bg-slate-50 border-2 border-gray-300 rounded-xl px-3 py-2.5 font-bold text-gray-800 focus:outline-none focus:border-hondaRed transition text-sm">
-        <option value="">-- Pilih Nomor Plat / Motor Anda --</option>
-        <option value="DA1234ABC">DA 1234 ABC - Vario 160 (Budi)</option>
-        <option value="KH5678XY">KH 5678 XY - PCX 160 (Siti)</option>
-        <option value="DA9999ZZ">DA 9999 ZZ - Scoopy (Rizky)</option>
-      </select>
+      <div class="flex space-x-2">
+        <input type="text" id="inputPlatKonsumen" placeholder="Contoh: DA 1234 ABC" class="flex-1 bg-slate-50 border-2 border-gray-300 rounded-xl px-3 py-2 font-bold uppercase text-gray-800 focus:outline-none focus:border-hondaRed text-sm">
+        <button onclick="connectRealtime()" class="bg-hondaRed text-white font-bold px-4 py-2 rounded-xl text-xs hover:bg-hondaDarkRed transition">
+          Pantau
+        </button>
+      </div>
     </div>
 
-    <!-- KARTU HASIL PEMERIKSAAN (AREA YANG BISA DIUNDUH JADI GAMBAR) -->
+    <!-- KARTU HASIL PEMERIKSAAN -->
     <div id="captureArea" class="bg-white rounded-2xl shadow-md border border-gray-200 overflow-hidden">
       
-      <!-- MOTOR HEADER INFO -->
       <div class="bg-gradient-to-r from-gray-900 to-hondaBlack text-white p-4 border-b border-gray-800">
         <div class="flex justify-between items-start">
           <div>
             <span class="inline-block bg-hondaRed text-white text-[10px] font-black uppercase px-2 py-0.5 rounded tracking-wider mb-1">
               Lembar Cek Digital
             </span>
-            <h2 id="dispPlat" class="text-xl font-black tracking-tight text-yellow-400">DA 1234 ABC</h2>
-            <p id="dispModel" class="text-xs text-gray-300 font-medium">Honda Vario 160</p>
+            <h2 id="dispPlat" class="text-xl font-black tracking-tight text-yellow-400">DA ---- XXX</h2>
+            <p id="dispModel" class="text-xs text-gray-300 font-medium">Honda Motor</p>
           </div>
           <div class="text-right">
-            <p id="dispNama" class="text-xs font-bold text-white">Pemilik: Budi</p>
-            <p id="dispKm" class="text-[11px] text-gray-400 mt-0.5"><i class="fa-solid fa-gauge mr-1"></i>12.000 KM</p>
-            <p id="dispTime" class="text-[10px] text-gray-500 mt-0.5"><i class="fa-regular fa-clock mr-1"></i>10:15 WIB</p>
+            <p id="dispNama" class="text-xs font-bold text-white">Pemilik: -</p>
+            <p id="dispKm" class="text-[11px] text-gray-400 mt-0.5"><i class="fa-solid fa-gauge mr-1"></i>0 KM</p>
+            <p id="dispTime" class="text-[10px] text-gray-500 mt-0.5"><i class="fa-regular fa-clock mr-1"></i>--:-- WIB</p>
           </div>
         </div>
 
-        <!-- REKAP STATUS RINGKAS -->
         <div class="grid grid-cols-3 gap-2 mt-3 pt-3 border-t border-gray-800 text-center">
           <div class="bg-emerald-950/60 border border-emerald-800/50 p-1.5 rounded-lg">
             <span class="block text-[10px] text-emerald-400 font-semibold">BAIK</span>
-            <span id="countBaik" class="text-base font-black text-emerald-300">12</span>
+            <span id="countBaik" class="text-base font-black text-emerald-300">0</span>
           </div>
           <div class="bg-amber-950/60 border border-amber-800/50 p-1.5 rounded-lg">
             <span class="block text-[10px] text-amber-400 font-semibold">SERVICE</span>
-            <span id="countService" class="text-base font-black text-amber-300">2</span>
+            <span id="countService" class="text-base font-black text-amber-300">0</span>
           </div>
           <div class="bg-rose-950/60 border border-rose-800/50 p-1.5 rounded-lg">
             <span class="block text-[10px] text-rose-400 font-semibold">HARUS GANTI</span>
-            <span id="countGanti" class="text-base font-black text-rose-300">1</span>
+            <span id="countGanti" class="text-base font-black text-rose-300">0</span>
           </div>
         </div>
       </div>
 
-      <!-- BANNER PERINGATAN REKOMENDASI -->
-      <div id="alertBanner" class="bg-rose-50 border-b border-rose-200 p-3 flex items-center space-x-3 alert-ring">
+      <div id="alertBanner" class="bg-rose-50 border-b border-rose-200 p-3 flex items-center space-x-3 alert-ring hidden">
         <div class="bg-rose-600 text-white p-2 rounded-full flex-shrink-0 w-8 h-8 flex items-center justify-center font-bold">
           <i class="fa-solid fa-triangle-exclamation text-xs"></i>
         </div>
@@ -131,86 +117,103 @@
         </div>
       </div>
 
-      <!-- LIST 15 ITEM PEMERIKSAAN -->
       <div class="p-3 space-y-2.5" id="inspectionList">
-        <!-- Item akan dirender oleh JS -->
+        <p class="text-center text-xs text-gray-400 py-6">Masukkan plat nomor di atas untuk memantau pengerjaan motor Anda.</p>
       </div>
 
-      <!-- CATATAN LAINNYA MEKANIK -->
       <div class="p-3 bg-slate-50 border-t border-gray-200">
         <p class="text-xs font-bold text-gray-700 uppercase mb-1">
           <i class="fa-solid fa-clipboard text-hondaRed mr-1"></i> Catatan Tambahan Mekanik:
         </p>
         <p id="dispCatatanLain" class="text-xs text-gray-600 italic bg-white p-2.5 rounded-xl border border-gray-200">
-          "Tekanan angin ban disesuaikan. Busi perlu dibersihkan pada service berikutnya."
+          "Belum ada catatan dari mekanik."
         </p>
       </div>
 
-      <!-- FOOTER WATERMARK -->
       <div class="bg-gray-100 px-4 py-2 text-center text-[10px] text-gray-400 border-t border-gray-200">
         AHASS Honda Trio Motor Tamiang Layang • Customer Retention System
       </div>
     </div>
 
-    <!-- TOMBOL AKSIONS KONSUMEN -->
     <div class="space-y-2 pt-1">
       <button onclick="downloadAsImage()" class="w-full bg-gray-800 hover:bg-gray-900 text-white font-bold py-3 px-4 rounded-xl shadow-md transition flex items-center justify-center space-x-2 text-sm">
         <i class="fa-solid fa-download text-amber-400"></i>
         <span>Unduh Hasil Cek Mekanik (PNG)</span>
       </button>
-
-      <a href="tel:08123456789" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-4 rounded-xl shadow-sm transition flex items-center justify-center space-x-2 text-xs">
-        <i class="fa-solid fa-headset"></i>
-        <span>Panggil Service Advisor / Kasir</span>
-      </a>
     </div>
 
   </main>
 
-  <!-- JS SCRIPT -->
   <script>
     let soundEnabled = true;
-
-    // Sample Data 15 Items
-    const itemsData = [
-      { id: 1, name: "Lampu", icon: "fa-lightbulb", status: "BAIK", note: "Lampu utama & sein berfungsi normal" },
-      { id: 2, name: "Minyak Rem", icon: "fa-flask", status: "BAIK", note: "Volume cukup, tidak bocor" },
-      { id: 3, name: "Oli Mesin", icon: "fa-oil-can", status: "SERVICE", note: "Warna mulai hitam, disarankan ganti" },
-      { id: 4, name: "Oli Gardan", icon: "fa-gears", status: "BAIK", note: "Kondisi jernih" },
-      { id: 5, name: "Ban Depan", icon: "fa-circle-notch", status: "BAIK", note: "Tebal 80%" },
-      { id: 6, name: "Ban Belakang", icon: "fa-circle-notch", status: "SERVICE", note: "Tebal 40%, ada sedikit retak halus" },
-      { id: 7, name: "Seal Shock", icon: "fa-ring", status: "BAIK", note: "Bersih, tidak ada bocor oli" },
-      { id: 8, name: "Kampas Rem", icon: "fa-shield-halved", status: "GANTI", note: "Ketebalan sisa 10%, rawan aus" },
-      { id: 9, name: "Drive Belt (CVT)", icon: "fa-infinity", status: "BAIK", note: "Lentur, tidak ada retak" },
-      { id: 10, name: "Gear & Rantai", icon: "fa-link", status: "BAIK", note: "Setelan kencang & terlumasi" },
-      { id: 11, name: "Air Radiator", icon: "fa-temperature-half", status: "BAIK", note: "Reservoir di garis kencang" },
-      { id: 12, name: "Bearing (Lahar)", icon: "fa-compact-disc", status: "BAIK", note: "Putaran roda lancar" },
-      { id: 13, name: "Filter Udara", icon: "fa-wind", status: "BAIK", note: "Cukup dibersihkan" },
-      { id: 14, name: "Accu / Aki", icon: "fa-car-battery", status: "BAIK", note: "Tegangan 12.6V bagus" },
-      { id: 15, name: "Busi", icon: "fa-bolt", status: "BAIK", note: "Pengapian normal" }
-    ];
-
-    // Status Keputusan Konsumen
+    let activeEventSource = null;
     const consumerDecisions = {};
 
-    function renderItems() {
+    const itemsMaster = [
+      { id: 1, name: "Lampu", icon: "fa-lightbulb" },
+      { id: 2, name: "Minyak Rem", icon: "fa-flask" },
+      { id: 3, name: "Oli Mesin", icon: "fa-oil-can" },
+      { id: 4, name: "Oli Gardan", icon: "fa-gears" },
+      { id: 5, name: "Ban Depan", icon: "fa-circle-notch" },
+      { id: 6, name: "Ban Belakang", icon: "fa-circle-notch" },
+      { id: 7, name: "Seal Shock", icon: "fa-ring" },
+      { id: 8, name: "Kampas Rem", icon: "fa-shield-halved" },
+      { id: 9, name: "Drive Belt (CVT)", icon: "fa-infinity" },
+      { id: 10, name: "Gear & Rantai", icon: "fa-link" },
+      { id: 11, name: "Air Radiator", icon: "fa-temperature-half" },
+      { id: 12, name: "Bearing (Lahar)", icon: "fa-compact-disc" },
+      { id: 13, name: "Filter Udara", icon: "fa-wind" },
+      { id: 14, name: "Accu / Aki", icon: "fa-car-battery" },
+      { id: 15, name: "Busi", icon: "fa-bolt" }
+    ];
+
+    function connectRealtime() {
+      const input = document.getElementById('inputPlatKonsumen').value.trim().toUpperCase().replace(/\s+/g, '');
+      if (!input) return;
+
+      if (activeEventSource) activeEventSource.close();
+
+      const url = `https://supernova-6d8ed-default-rtdb.firebaseio.com/active_services/${input}.json`;
+      activeEventSource = new EventSource(url);
+
+      activeEventSource.addEventListener('put', function(e) {
+        const res = JSON.parse(e.data);
+        if (res && res.data) {
+          playTingSound();
+          updateUI(res.data);
+        }
+      });
+    }
+
+    function updateUI(data) {
+      document.getElementById('dispPlat').innerText = data.platNo || '-';
+      document.getElementById('dispModel').innerText = data.tipeMotor || '-';
+      document.getElementById('dispNama').innerText = `Pemilik: ${data.namaKonsumen || '-'}`;
+      document.getElementById('dispKm').innerText = `${data.kmMotor || '0'} KM`;
+      document.getElementById('dispTime').innerText = `${data.lastUpdate || '--:--'} WIB`;
+      document.getElementById('dispCatatanLain').innerText = `"${data.catatanMekanik || 'Tidak ada catatan.'}"`;
+
       const listContainer = document.getElementById('inspectionList');
       listContainer.innerHTML = '';
 
       let cBaik = 0, cService = 0, cGanti = 0;
 
-      itemsData.forEach((item, index) => {
-        if (item.status === 'BAIK') cBaik++;
-        if (item.status === 'SERVICE') cService++;
-        if (item.status === 'GANTI') cGanti++;
+      itemsMaster.forEach(item => {
+        const itemInfo = data.items ? data.items[item.id] : { status: 'BAIK', note: '' };
+        const st = itemInfo ? itemInfo.status : 'BAIK';
+        const note = itemInfo ? itemInfo.note : '';
 
-        const isProblem = item.status === 'SERVICE' || item.status === 'GANTI';
+        if (st === 'BAIK') cBaik++;
+        if (st === 'SERVICE') cService++;
+        if (st === 'GANTI') cGanti++;
+
+        const isProblem = st === 'SERVICE' || st === 'GANTI';
         const userChoice = consumerDecisions[item.id] || null;
 
         let badgeClass = 'status-badge-baik';
         let badgeLabel = 'BAIK';
-        if (item.status === 'SERVICE') { badgeClass = 'status-badge-service'; badgeLabel = 'PERLU SERVICE'; }
-        if (item.status === 'GANTI') { badgeClass = 'status-badge-ganti'; badgeLabel = 'HARUS GANTI'; }
+        if (st === 'SERVICE') { badgeClass = 'status-badge-service'; badgeLabel = 'PERLU SERVICE'; }
+        if (st === 'GANTI') { badgeClass = 'status-badge-ganti'; badgeLabel = 'HARUS GANTI'; }
 
         const card = document.createElement('div');
         card.className = `p-3 rounded-xl border transition ${isProblem ? 'bg-amber-50/40 border-amber-200' : 'bg-slate-50/70 border-gray-200'}`;
@@ -223,7 +226,7 @@
               </div>
               <div>
                 <h4 class="text-xs font-black text-gray-800">${item.id}. ${item.name}</h4>
-                <p class="text-[11px] text-gray-500 mt-0.5">${item.note}</p>
+                <p class="text-[11px] text-gray-500 mt-0.5">${note || 'Kondisi terpantau'}</p>
               </div>
             </div>
             <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full ${badgeClass} flex-shrink-0">
@@ -263,7 +266,6 @@
     function setDecision(itemId, decision) {
       consumerDecisions[itemId] = decision;
       playTingSound();
-      renderItems();
     }
 
     function playTingSound() {
@@ -273,7 +275,7 @@
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
         osc.type = 'sine';
-        osc.frequency.setValueAtTime(880, audioCtx.currentTime); // Pitch A5 (TING!)
+        osc.frequency.setValueAtTime(880, audioCtx.currentTime);
         gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.6);
         osc.connect(gain);
@@ -305,24 +307,6 @@
         link.click();
       });
     }
-
-    function loadVehicleData(plat) {
-      if (!plat) return;
-      playTingSound();
-      if (plat === 'DA1234ABC') {
-        document.getElementById('dispPlat').innerText = 'DA 1234 ABC';
-        document.getElementById('dispModel').innerText = 'Honda Vario 160';
-        document.getElementById('dispNama').innerText = 'Pemilik: Budi';
-      } else if (plat === 'KH5678XY') {
-        document.getElementById('dispPlat').innerText = 'KH 5678 XY';
-        document.getElementById('dispModel').innerText = 'Honda PCX 160';
-        document.getElementById('dispNama').innerText = 'Pemilik: Siti';
-      }
-      renderItems();
-    }
-
-    // Initial Render
-    renderItems();
   </script>
 </body>
 </html>
