@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Form Pemeriksaan Mekanik - Trio Motor Tamiang Layang</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        honda: {
+                            red: '#E52229',
+                            darkred: '#BE121A',
+                            black: '#121212',
+                            gray: '#1E1E24',
+                            lightbg: '#F8FAFC'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .option-card-checked-baik {
+            background-color: #10B981 !important;
+            color: white !important;
+            border-color: #059669 !important;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+        .option-card-checked-service {
+            background-color: #F59E0B !important;
+            color: white !important;
+            border-color: #D97706 !important;
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+        }
+        .option-card-checked-ganti {
+            background-color: #EF4444 !important;
+            color: white !important;
+            border-color: #DC2626 !important;
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 font-sans text-slate-800 antialiased pb-24 min-h-screen">
+
+    <!-- Top Navigation / Header Branding -->
+    <header class="bg-honda-black text-white sticky top-0 z-30 shadow-lg border-b-4 border-honda-red">
+        <div class="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="bg-honda-red p-2 rounded-lg text-white flex items-center justify-center">
+                    <i class="fa-solid font-bold text-xl">AHASS</i>
+                </div>
+                <div>
+                    <h1 class="font-extrabold text-base tracking-wide leading-tight uppercase text-white">TRIO MOTOR</h1>
+                    <p class="text-xs text-gray-300 font-medium">Tamiang Layang - Inspector Pro</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-2">
+                <button onclick="openSettingsModal()" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg transition text-sm flex items-center gap-1">
+                    <i class="fa-solid fa-gear text-slate-300"></i>
+                    <span class="hidden sm:inline text-xs">API Config</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-3xl mx-auto px-4 mt-4 space-y-5">
+
+        <!-- Card Data Konsumen & Motor -->
+        <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200/80">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-solid fa-id-card text-honda-red"></i>
+                    <h2 class="font-bold text-slate-800 text-sm uppercase tracking-wider">Informasi Motor & Pemilik</h2>
+                </div>
+                <span class="text-[11px] bg-red-50 text-honda-red font-semibold px-2.5 py-1 rounded-full border border-red-100">
+                    <i class="fa-solid fa-circle text-[8px] mr-1 animate-pulse"></i> Entry Baru
+                </span>
+            </div>
+
+            <form id="inspectionForm" onsubmit="handleFormSubmit(event)" class="space-y-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Nama Pemilik <span class="text-red-500">*</span></label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+                                <i class="fa-solid fa-user text-xs"></i>
+                            </span>
+                            <input type="text" id="namaPemilik" required placeholder="Contoh: Budi Santoso" 
+                                class="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-honda-red focus:bg-white transition">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 uppercase mb-1">No. Plat Motor <span class="text-red-500">*</span></label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+                                <i class="fa-solid fa-motorcycle text-xs"></i>
+                            </span>
+                            <input type="text" id="noPlat" required placeholder="DA 1234 ABC" uppercase
+                                class="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold tracking-wider uppercase focus:outline-none focus:ring-2 focus:ring-honda-red focus:bg-white transition">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Tipe Motor <span class="text-red-500">*</span></label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+                                <i class="fa-solid fa-gauge text-xs"></i>
+                            </span>
+                            <input type="text" id="tipeMotor" required placeholder="Vario 160 / Beat FI / PCX" 
+                                class="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-honda-red focus:bg-white transition">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Km. Service <span class="text-red-500">*</span></label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+                                <i class="fa-solid fa-road text-xs"></i>
+                            </span>
+                            <input type="number" id="kmService" required placeholder="12500" 
+                                class="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-honda-red focus:bg-white transition">
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Ringkasan Status Poin -->
+        <div class="bg-slate-900 text-white rounded-2xl p-4 shadow-md flex items-center justify-between gap-2 border border-slate-800">
+            <div class="text-xs font-medium text-slate-400">
+                <span>Progres Cek:</span>
+                <p class="text-base font-bold text-white"><span id="completedCount">0</span> / 15 Item</p>
+            </div>
+            <div class="flex items-center gap-2">
+                <div class="text-center px-3 py-1.5 bg-emerald-950/80 border border-emerald-800/80 rounded-xl">
+                    <span class="text-[10px] uppercase font-bold text-emerald-400 block">Baik</span>
+                    <span id="counterBaik" class="text-sm font-extrabold text-emerald-300">0</span>
+                </div>
+                <div class="text-center px-3 py-1.5 bg-amber-950/80 border border-amber-800/80 rounded-xl">
+                    <span class="text-[10px] uppercase font-bold text-amber-400 block">Service</span>
+                    <span id="counterService" class="text-sm font-extrabold text-amber-300">0</span>
+                </div>
+                <div class="text-center px-3 py-1.5 bg-rose-950/80 border border-rose-800/80 rounded-xl">
+                    <span class="text-[10px] uppercase font-bold text-rose-400 block">Ganti</span>
+                    <span id="counterGanti" class="text-sm font-extrabold text-rose-300">0</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Daftar 15 Item Pemeriksaan -->
+        <div class="space-y-3" id="checklistContainer">
+            <!-- Dynamic Items generated via JS -->
+        </div>
+
+        <!-- Catatan Lainnya Section -->
+        <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200">
+            <label class="flex items-center gap-2 font-bold text-slate-800 text-sm uppercase mb-2">
+                <i class="fa-solid fa-clipboard text-honda-red"></i>
+                16. Catatan Tambahan Mekanik (Opsional)
+            </label>
+            <textarea id="catatanLainnya" rows="3" placeholder="Masukkan rekomendasi umum, kendala mesin lainnya, atau informasi tambahan..."
+                class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-honda-red focus:bg-white transition"></textarea>
+        </div>
+
+        <!-- Submit Button Box -->
+        <div class="pt-2">
+            <button type="button" onclick="triggerSubmit()" id="btnSubmit" 
+                class="w-full bg-honda-red hover:bg-honda-darkred text-white font-extrabold py-4 px-6 rounded-2xl shadow-lg shadow-red-500/25 hover:shadow-red-500/40 transition active:scale-[0.99] flex items-center justify-center space-x-2 text-base">
+                <i class="fa-solid fa-paper-plane"></i>
+                <span>Kirim Hasil Cek ke Konsumen Realtime</span>
+            </button>
+            <p class="text-center text-xs text-slate-400 mt-2">Data akan langsung terkirim ke Portal Konsumen & Google Sheets</p>
+        </div>
+
+    </main>
+
+    <!-- Modal Settings Configuration (Google Apps Script / Firebase) -->
+    <div id="settingsModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md rounded-2xl p-6 shadow-2xl space-y-4">
+            <div class="flex justify-between items-center border-b pb-3">
+                <h3 class="font-bold text-slate-800 flex items-center gap-2">
+                    <i class="fa-solid fa-sliders text-honda-red"></i> Pengaturan Integrasi Backend
+                </h3>
+                <button onclick="closeSettingsModal()" class="text-slate-400 hover:text-slate-600">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Google Apps Script Web App URL</label>
+                    <input type="url" id="gasUrlInput" placeholder="https://script.google.com/macros/s/.../exec"
+                        class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono focus:ring-2 focus:ring-honda-red outline-none">
+                    <p class="text-[10px] text-slate-400 mt-1">Webhook endpoint untuk memasukkan hasil pemeriksaan ke spreadsheet.</p>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Firebase Realtime Database URL</label>
+                    <input type="url" id="firebaseUrlInput" placeholder="https://nama-db-default-rtdb.firebaseio.com"
+                        class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono focus:ring-2 focus:ring-honda-red outline-none">
+                    <p class="text-[10px] text-slate-400 mt-1">URL Firebase untuk sync instan real-time (< 1 detik delay) ke ruang tunggu.</p>
+                </div>
+
+                <div class="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800">
+                    <i class="fa-solid fa-circle-info mr-1"></i> Mode Simulasi aktif jika URL dibiarkan kosong. Anda tetap bisa menguji alur aplikasi ini secara lokal.
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-2 pt-2">
+                <button onclick="closeSettingsModal()" class="px-4 py-2 bg-slate-100 text-slate-600 rounded-xl text-xs font-bold hover:bg-slate-200">
+                    Batal
+                </button>
+                <button onclick="saveSettings()" class="px-4 py-2 bg-honda-red text-white rounded-xl text-xs font-bold hover:bg-honda-darkred shadow">
+                    Simpan Konfigurasi
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification System -->
+    <div id="toastContainer" class="fixed bottom-6 right-6 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <script>
+        // 15 Item Pemeriksaan dari Lembar Fisik Honda Trio Motor (Revisi Terbaru)
+        const inspectionItems = [
+            { id: 1, name: "Lampu", icon: "fa-regular fa-lightbulb" },
+            { id: 2, name: "Minyak Rem", icon: "fa-solid fa-oil-can" },
+            { id: 3, name: "Oli Mesin", icon: "fa-solid fa-bottle-droplet" },
+            { id: 4, name: "Oli Gardan", icon: "fa-solid fa-gear" },
+            { id: 5, name: "Ban Depan", icon: "fa-solid fa-circle-dot" },
+            { id: 6, name: "Ban Belakang", icon: "fa-solid fa-circle-dot" },
+            { id: 7, name: "Seal Shock", icon: "fa-solid fa-compress" },
+            { id: 8, name: "Kampas Rem", icon: "fa-solid fa-dharmachakra" },
+            { id: 9, name: "Drive Belt (CVT)", icon: "fa-solid fa-infinity" },
+            { id: 10, name: "Gear & Rantai", icon: "fa-solid fa-link" },
+            { id: 11, name: "Air Radiator", icon: "fa-solid fa-temperature-three-quarters" },
+            { id: 12, name: "Bearing (Lahar)", icon: "fa-solid fa-arrows-spin" },
+            { id: 13, name: "Filter Udara", icon: "fa-solid fa-wind" },
+            { id: 14, name: "Accu / Aki", icon: "fa-solid fa-car-battery" },
+            { id: 15, name: "Busi", icon: "fa-solid fa-bolt" }
+        ];
+
+        // State Penyimpanan
+        let formState = {};
+
+        // Inisialisasi Tampilan Checklist
+        document.addEventListener("DOMContentLoaded", () => {
+            renderChecklistItems();
+            loadSettings();
+            updateCounters();
+        });
+
+        function renderChecklistItems() {
+            const container = document.getElementById("checklistContainer");
+            container.innerHTML = "";
+
+            inspectionItems.forEach(item => {
+                formState[item.id] = {
+                    name: item.name,
+                    status: null, // "Baik", "Service", "Ganti"
+                    catatan: ""
+                };
+
+                const cardHtml = `
+                    <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 space-y-3 transition hover:border-slate-300" id="item-card-${item.id}">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600 font-bold text-xs border border-slate-200">
+                                    ${item.id}
+                                </div>
+                                <span class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                                    <i class="${item.icon} text-slate-500"></i> ${item.name}
+                                </span>
+                            </div>
+                            <span id="badge-status-${item.id}" class="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-400">
+                                Belum Diisi
+                            </span>
+                        </div>
+
+                        <!-- 3 Pilihan Tombol Opsi Status -->
+                        <div class="grid grid-cols-3 gap-2">
+                            <button type="button" onclick="selectStatus(${item.id}, 'Baik')" id="btn-${item.id}-Baik"
+                                class="py-2.5 px-2 rounded-xl text-xs font-bold border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 transition text-center flex flex-col items-center justify-center gap-1">
+                                <i class="fa-solid fa-circle-check text-emerald-500 text-sm"></i>
+                                <span>Baik</span>
+                            </button>
+
+                            <button type="button" onclick="selectStatus(${item.id}, 'Service')" id="btn-${item.id}-Service"
+                                class="py-2.5 px-2 rounded-xl text-xs font-bold border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 transition text-center flex flex-col items-center justify-center gap-1">
+                                <i class="fa-solid fa-triangle-exclamation text-amber-500 text-sm"></i>
+                                <span>S = Service</span>
+                            </button>
+
+                            <button type="button" onclick="selectStatus(${item.id}, 'Ganti')" id="btn-${item.id}-Ganti"
+                                class="py-2.5 px-2 rounded-xl text-xs font-bold border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 transition text-center flex flex-col items-center justify-center gap-1">
+                                <i class="fa-solid fa-circle-xmark text-rose-500 text-sm"></i>
+                                <span>G = Ganti</span>
+                            </button>
+                        </div>
+
+                        <!-- Catatan Opsional -->
+                        <div>
+                            <input type="text" id="catatan-${item.id}" oninput="updateCatatan(${item.id}, this.value)"
+                                placeholder="Catatan khusus untuk ${item.name} (Opsional)" 
+                                class="w-full text-xs p-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-honda-red">
+                        </div>
+                    </div>
+                `;
+                container.insertAdjacentHTML("beforeend", cardHtml);
+            });
+        }
+
+        function selectStatus(itemId, statusValue) {
+            formState[itemId].status = statusValue;
+
+            // Reset Kelas CSS Tombol Opsi
+            const options = ['Baik', 'Service', 'Ganti'];
+            options.forEach(opt => {
+                const btn = document.getElementById(`btn-${itemId}-${opt}`);
+                btn.className = "py-2.5 px-2 rounded-xl text-xs font-bold border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 transition text-center flex flex-col items-center justify-center gap-1";
+            });
+
+            // Set Style Aktif
+            const activeBtn = document.getElementById(`btn-${itemId}-${statusValue}`);
+            const badge = document.getElementById(`badge-status-${itemId}`);
+
+            if (statusValue === 'Baik') {
+                activeBtn.className += " option-card-checked-baik";
+                badge.className = "text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700";
+                badge.innerText = "Baik";
+            } else if (statusValue === 'Service') {
+                activeBtn.className += " option-card-checked-service";
+                badge.className = "text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-700";
+                badge.innerText = "S - Service";
+            } else if (statusValue === 'Ganti') {
+                activeBtn.className += " option-card-checked-ganti";
+                badge.className = "text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-700";
+                badge.innerText = "G - Harus Ganti";
+            }
+
+            updateCounters();
+        }
+
+        function updateCatatan(itemId, text) {
+            formState[itemId].catatan = text;
+        }
+
+        function updateCounters() {
+            let completed = 0;
+            let baik = 0;
+            let service = 0;
+            let ganti = 0;
+
+            Object.values(formState).forEach(item => {
+                if (item.status) {
+                    completed++;
+                    if (item.status === 'Baik') baik++;
+                    if (item.status === 'Service') service++;
+                    if (item.status === 'Ganti') ganti++;
+                }
+            });
+
+            document.getElementById("completedCount").innerText = completed;
+            document.getElementById("counterBaik").innerText = baik;
+            document.getElementById("counterService").innerText = service;
+            document.getElementById("counterGanti").innerText = ganti;
+        }
+
+        function triggerSubmit() {
+            const namaPemilik = document.getElementById("namaPemilik").value.trim();
+            const noPlat = document.getElementById("noPlat").value.trim();
+            const tipeMotor = document.getElementById("tipeMotor").value.trim();
+            const kmService = document.getElementById("kmService").value.trim();
+
+            if (!namaPemilik || !noPlat || !tipeMotor || !kmService) {
+                showToast("Harap lengkapi Informasi Motor & Pemilik terlebih dahulu!", "warning");
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                return;
+            }
+
+            // Validasi apakah setidaknya ada item yang dipilih
+            let completedCount = 0;
+            Object.values(formState).forEach(i => { if (i.status) completedCount++; });
+
+            if (completedCount === 0) {
+                showToast("Pilih setidaknya 1 status hasil cek kuesioner!", "warning");
+                return;
+            }
+
+            const payload = {
+                action: "SUBMIT_INSPECTION",
+                timestamp: new Date().toISOString(),
+                namaPemilik: namaPemilik,
+                noPlat: noPlat.toUpperCase(),
+                tipeMotor: tipeMotor,
+                kmService: kmService,
+                catatanLainnya: document.getElementById("catatanLainnya").value,
+                items: Object.values(formState)
+            };
+
+            sendDataToBackend(payload);
+        }
+
+        async function sendDataToBackend(payload) {
+            const btn = document.getElementById("btnSubmit");
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> <span>Mengirim Data Hasil Cek...</span>`;
+
+            const gasUrl = localStorage.getItem("gasUrl") || "";
+            const firebaseUrl = localStorage.getItem("firebaseUrl") || "";
+
+            try {
+                // 1. Send to Google Apps Script (if configured)
+                if (gasUrl) {
+                    await fetch(gasUrl, {
+                        method: "POST",
+                        mode: "no-cors",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(payload)
+                    });
+                }
+
+                // 2. Send to Firebase Realtime Database (if configured)
+                if (firebaseUrl) {
+                    const platKey = payload.noPlat.replace(/\s+/g, '').toUpperCase();
+                    const fbEndpoint = `${firebaseUrl.replace(/\/$/, "")}/active_services/${platKey}.json`;
+                    await fetch(fbEndpoint, {
+                        method: "PUT",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(payload)
+                    });
+                }
+
+                // Delay simulasi UX
+                await new Promise(r => setTimeout(r, 1000));
+
+                showToast("Data pemeriksaan berhasil dikirim ke Konsumen!", "success");
+                
+                // Konfirmasi Reset
+                setTimeout(() => {
+                    if (confirm("Pemeriksaan selesai & terkirim! Apakah Anda ingin mereset form untuk kendaraan berikutnya?")) {
+                        resetForm();
+                    }
+                }, 500);
+
+            } catch (error) {
+                console.error("Error sending inspection:", error);
+                showToast("Gagal mengirim data. Periksa koneksi internet Anda.", "error");
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> <span>Kirim Hasil Cek ke Konsumen Realtime</span>`;
+            }
+        }
+
+        function resetForm() {
+            document.getElementById("inspectionForm").reset();
+            document.getElementById("catatanLainnya").value = "";
+            renderChecklistItems();
+            updateCounters();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Modal Config Logic
+        function openSettingsModal() {
+            document.getElementById("gasUrlInput").value = localStorage.getItem("gasUrl") || "";
+            document.getElementById("firebaseUrlInput").value = localStorage.getItem("firebaseUrl") || "";
+            document.getElementById("settingsModal").classList.remove("hidden");
+        }
+
+        function closeSettingsModal() {
+            document.getElementById("settingsModal").classList.add("hidden");
+        }
+
+        function saveSettings() {
+            const gasUrl = document.getElementById("gasUrlInput").value.trim();
+            const firebaseUrl = document.getElementById("firebaseUrlInput").value.trim();
+
+            localStorage.setItem("gasUrl", gasUrl);
+            localStorage.setItem("firebaseUrl", firebaseUrl);
+
+            closeSettingsModal();
+            showToast("Konfigurasi API berhasil disimpan!", "success");
+        }
+
+        function loadSettings() {
+            // Pre-load if available
+        }
+
+        // Toast Notification Helper
+        function showToast(message, type = "success") {
+            const container = document.getElementById("toastContainer");
+            const toast = document.createElement("div");
+            
+            let bgClass = "bg-slate-900 text-white";
+            let icon = "fa-circle-check text-emerald-400";
+
+            if (type === "warning") {
+                bgClass = "bg-amber-900 text-amber-100";
+                icon = "fa-triangle-exclamation text-amber-400";
+            } else if (type === "error") {
+                bgClass = "bg-rose-900 text-rose-100";
+                icon = "fa-circle-xmark text-rose-400";
+            }
+
+            toast.className = `${bgClass} px-4 py-3 rounded-xl shadow-xl flex items-center gap-3 text-xs font-semibold pointer-events-auto transform transition-all duration-300 translate-y-2 opacity-0 border border-white/10`;
+            toast.innerHTML = `<i class="fa-solid ${icon} text-base"></i> <span>${message}</span>`;
+
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.remove("translate-y-2", "opacity-0");
+            }, 10);
+
+            setTimeout(() => {
+                toast.classList.add("opacity-0", "translate-y-2");
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
+    </script>
+</body>
+</html>
