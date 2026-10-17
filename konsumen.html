@@ -86,6 +86,7 @@
           </div>
           <div class="text-right">
             <p id="dispNama" class="text-xs font-bold text-white">Pemilik: -</p>
+            <p id="dispMekanik" class="text-[11px] text-amber-400 font-bold mt-0.5"><i class="fa-solid fa-user-gear mr-1"></i>Mekanik: -</p>
             <p id="dispKm" class="text-[11px] text-gray-400 mt-0.5"><i class="fa-solid fa-gauge mr-1"></i>0 KM</p>
             <p id="dispTime" class="text-[10px] text-gray-500 mt-0.5"><i class="fa-regular fa-clock mr-1"></i>--:-- WIB</p>
           </div>
@@ -208,6 +209,7 @@
       document.getElementById('dispPlat').innerText = data.platNo || '-';
       document.getElementById('dispModel').innerText = data.tipeMotor || '-';
       document.getElementById('dispNama').innerText = `Pemilik: ${data.namaKonsumen || '-'}`;
+      document.getElementById('dispMekanik').innerHTML = `<i class="fa-solid fa-user-gear mr-1"></i>Mekanik: ${data.namaMekanik || 'Adul'}`;
       document.getElementById('dispKm').innerText = `${data.kmMotor || '0'} KM`;
       document.getElementById('dispTime').innerText = `${data.lastUpdate || '--:--'} WIB`;
       document.getElementById('dispCatatanLain').innerText = `"${data.catatanMekanik || 'Tidak ada catatan.'}"`;
